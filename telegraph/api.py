@@ -12,12 +12,15 @@ class TelegraphApi(object):
 
     :param access_token: access_token
     :type access_token: str
+    :param proxies: proxies
+    :type access_token: dict
     """
 
-    __slots__ = ('access_token', 'session')
+    __slots__ = ('access_token', 'session', 'proxies')
 
-    def __init__(self, access_token=None):
+    def __init__(self, access_token=None, proxies=None):
         self.access_token = access_token
+        self.proxies = proxies
         self.session = requests.Session()
 
     def method(self, method, values=None, path=''):
@@ -28,7 +31,8 @@ class TelegraphApi(object):
 
         response = self.session.post(
             'https://api.telegra.ph/{}/{}'.format(method, path),
-            values
+            values,
+            proxies = self.proxies
         ).json()
 
         if response.get('ok'):
@@ -41,12 +45,13 @@ class Telegraph(object):
     """ Telegraph API client helper
 
     :param access_token: Telegraph access token
+    ::param proxies: (optional) Dictionary mapping protocol to the URL of the proxy.
     """
 
     __slots__ = ('_telegraph',)
 
-    def __init__(self, access_token=None):
-        self._telegraph = TelegraphApi(access_token)
+    def __init__(self, access_token=None, proxies=None):
+        self._telegraph = TelegraphApi(access_token, proxies)
 
     def get_access_token(self):
         """ Return current access_token
@@ -113,11 +118,7 @@ class Telegraph(object):
             On success, returns dict with new access_token and auth_url fields
         """
 
-        response = self._telegraph.method('revokeAccessToken')
-
-        self._telegraph.access_token = response.get('access_token')
-
-        return response
+        return self._telegraph.method('revokeAccessToken')
 
     def get_page(self, path, return_content=True, return_html=True):
         """ Get a Telegraph page
